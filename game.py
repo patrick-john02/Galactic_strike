@@ -1,58 +1,96 @@
 import pygame
 import random
 import time
-import lobby
+
+# Initialize pygame
+pygame.init()
 
 # Screen dimensions
 WIDTH, HEIGHT = 850, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Galactic Strike")
 
 # Define colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 
-# loading screens
-background_frames = [
-    pygame.image.load("assets/images/frames/1.jpg"),
-    pygame.image.load("assets/images/frames/2.jpg"),
-    pygame.image.load("assets/images/frames/3.jpg"),
-    pygame.image.load("assets/images/frames/4.jpg"),
-    pygame.image.load("assets/images/frames/5.jpg")
-]
-
-# main menu background
-main_menu_bg = pygame.image.load("assets/images/11.png")
-
-# pictures ng mga characters bida and yung alien
-space_character = pygame.image.load("assets/images/character.gif")
+# Load assets
+background = pygame.image.load("assets/images/11.png")
+space_character = pygame.image.load("assets/images/spaceship.png")
 alien_villain = pygame.image.load("assets/images/alien.gif")
 
-# size ng mga images (di pa final)
-SPACE_CHARACTER_SIZE = (200, 200)
-ALIEN_VILLAIN_SIZE = (200, 200)
+# Resize images
+SPACE_CHARACTER_SIZE = (80, 80)
+ALIEN_VILLAIN_SIZE = (80, 80)
 space_character = pygame.transform.scale(space_character, SPACE_CHARACTER_SIZE)
 alien_villain = pygame.transform.scale(alien_villain, ALIEN_VILLAIN_SIZE)
 
-# Player and Bullet setup (medyo di pa refined pero gumagana naman na)
+# Define characters for selection
+character_1 = space_character
+character_2 = alien_villain
+
+def loading_screen():
+    screen.fill(BLACK)
+    font = pygame.font.Font(None, 50)
+    text = font.render("Loading...", True, WHITE)
+    screen.blit(text, (WIDTH // 2 - 60, HEIGHT // 2))
+    pygame.display.flip()
+    time.sleep(2)  # Simulate loading time
+
+def character_selection():
+    selected = None
+    font = pygame.font.Font(None, 36)
+    while selected is None:
+        screen.fill(BLACK)
+        screen.blit(character_1, (WIDTH // 3 - 40, HEIGHT // 2 - 40))
+        screen.blit(character_2, (2 * WIDTH // 3 - 40, HEIGHT // 2 - 40))
+        text = font.render("Choose Your Character: Press 1 or 2", True, WHITE)
+        screen.blit(text, (WIDTH // 2 - 180, HEIGHT // 4))
+        pygame.display.flip()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    selected = character_1
+                elif event.key == pygame.K_2:
+                    selected = character_2
+    return selected
+
+# Classes
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.Surface((10, 20))
         self.image.fill(WHITE)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+        self.rect = self.image.get_rect(center=(x, y))
 
     def update(self):
-        self.rect.y -= 10 
-        if self.rect.bottom < 0: 
+        self.rect.y -= 10
+        if self.rect.bottom < 0:
+            self.kill()
+
+class AlienBullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((10, 20))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect(center=(x, y))
+
+    def update(self):
+        self.rect.y += 7
+        if self.rect.top > HEIGHT:
             self.kill()
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, character_image):
+    def __init__(self, character):
         super().__init__()
-        self.image = character_image
-        self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH // 2, HEIGHT - 190)  
-
+        self.image = character
+        self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT - 100))
+        self.lives = 3
 
     def update(self, keys):
         speed = 5
@@ -61,123 +99,122 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
             self.rect.x += speed
 
-def show_loading_screen(screen):
-    WHITE = (255, 255, 255)
-    font = pygame.font.Font(None, 50)
-    clock = pygame.time.Clock()
+class Alien(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = alien_villain
+        self.rect = self.image.get_rect(x=random.randint(0, WIDTH - 50), y=random.randint(50, 150))
+        self.direction = random.choice([-1, 1])
+        self.speed = random.randint(1, 3)
+        self.shoot_timer = random.randint(30, 120)
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+    def update(self):
+        self.rect.x += self.direction * self.speed
+        if self.rect.left <= 0 or self.rect.right >= WIDTH:
+            self.direction *= -1
+        self.shoot_timer -= 1
+        if self.shoot_timer <= 0:
+            alien_bullet = AlienBullet(self.rect.centerx, self.rect.bottom)
+            alien_bullets.add(alien_bullet)
+            self.shoot_timer = random.randint(50, 150)
 
-        for bg_frame in background_frames:
-            screen.blit(bg_frame, (0, 0))
-            title_text = font.render("Loading...", True, WHITE)
-            screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 6))
-            pygame.display.flip()
-            clock.tick(5)
+# Groups
+def reset_game():
+    """ Resets the game state after a game over. """
+    player.lives = 3
+    bullets.empty()
+    alien_bullets.empty()
+    alien_group.empty()
+    for _ in range(5):
+        alien_group.add(Alien())
+    return 0  # Reset score
 
-    show_main_menu(screen)
+# Display loading screen
+loading_screen()
 
-def show_main_menu(screen):
-    font = pygame.font.Font(None, 50)
-    button_font = pygame.font.Font(None, 40)
-    WHITE = (255, 255, 255)
-    BLUE = (0, 0, 255)
-    LIGHT_BLUE = (100, 100, 255)
+# Character selection
+selected_character = character_selection()
 
-    screen.blit(main_menu_bg, (0, 0))
-    title_text = font.render("Galactic Strike", True, WHITE)
-    screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 6))
-    screen.blit(space_character, (50, HEIGHT // 3 - space_character.get_height() // 2))
-    screen.blit(alien_villain, (WIDTH - alien_villain.get_width() - 50, HEIGHT // 3 - alien_villain.get_height() // 2))
+# Create player with selected character
+player = Player(selected_character)
+player_group = pygame.sprite.Group(player)
+bullets = pygame.sprite.Group()
+alien_bullets = pygame.sprite.Group()
+alien_group = pygame.sprite.Group()
 
-    play_button = draw_button(screen, "Play", 100, HEIGHT // 2 + 100, 200, 50, BLUE, LIGHT_BLUE, button_font)
-    task_button = draw_button(screen, "Task", 325, HEIGHT // 2 + 100, 200, 50, BLUE, LIGHT_BLUE, button_font)
-    options_button = draw_button(screen, "Options", 550, HEIGHT // 2 + 100, 200, 50, BLUE, LIGHT_BLUE, button_font)
+for _ in range(5):
+    alien_group.add(Alien())
 
+# Score
+score = 0
+font = pygame.font.Font(None, 36)
+
+def draw_text(text, x, y, color=WHITE):
+    screen.blit(font.render(text, True, color), (x, y))
+
+def game_over():
+    """ Displays the Game Over screen and waits for the player to restart. """
+    screen.fill(BLACK)
+    draw_text("GAME OVER", WIDTH // 2 - 80, HEIGHT // 2)
+    draw_text("Press R to Restart", WIDTH // 2 - 100, HEIGHT // 2 + 40)
     pygame.display.flip()
-    return play_button, task_button, options_button
 
-def draw_button(screen, text, x, y, width, height, color, hover_color, font):
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    button_rect = pygame.Rect(x, y, width, height)
-
-    if button_rect.collidepoint(mouse_x, mouse_y):
-        pygame.draw.rect(screen, hover_color, button_rect)
-    else:
-        pygame.draw.rect(screen, color, button_rect)
-
-    text_surf = font.render(text, True, (255, 255, 255))
-    screen.blit(text_surf, (x + (width - text_surf.get_width()) // 2, y + (height - text_surf.get_height()) // 2))
-
-    return button_rect
-
-def start_game(screen, selected_character):
-    player = Player(selected_character)
-    player_group = pygame.sprite.Group()
-    player_group.add(player)
-    bullets = pygame.sprite.Group()
-
-    # mga red na enemies
-    alien_group = pygame.sprite.Group()
-    for _ in range(5):  # Add 5 enemies
-        alien = pygame.sprite.Sprite()
-        alien.image = pygame.Surface((50, 50))
-        alien.image.fill((255, 0, 0))  # Red alien
-        alien.rect = alien.image.get_rect()
-        alien.rect.x = random.randint(0, WIDTH - 50)
-        alien.rect.y = random.randint(-100, -50)
-        alien_group.add(alien)
-
-    clock = pygame.time.Clock()
-    running = True
-    while running:
+    waiting = True
+    while waiting:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                return reset_game()
 
-        keys = pygame.key.get_pressed()
-        player_group.update(keys)
+def update_score(score):
+    """ Handles bullet-alien collision and updates the score. """
+    for bullet in bullets:
+        hit = pygame.sprite.spritecollide(bullet, alien_group, True)
+        if hit:
+            bullet.kill()
+            score += 10
+            alien_group.add(Alien())
+    return score
 
-        # Shoot trigger
-        if keys[pygame.K_SPACE]:
+# Main Loop
+running = True
+while running:
+    screen.blit(background, (0, 0))
+    keys = pygame.key.get_pressed()
+    player_group.update(keys)
+    bullets.update()
+    alien_group.update()
+    alien_bullets.update()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             bullet = Bullet(player.rect.centerx, player.rect.top)
             bullets.add(bullet)
-        bullets.update()
 
-        # colission logics ng mga bullets at aliens
-        for alien in alien_group:
-            alien.rect.y += 2  # Move alien downward
-            if alien.rect.top > HEIGHT:
-                alien.rect.y = random.randint(-100, -50)
-                alien.rect.x = random.randint(0, WIDTH - 50)
+    # Update Score
+    score = update_score(score)
 
-        # also here
-        for bullet in bullets:
-            hit_aliens = pygame.sprite.spritecollide(bullet, alien_group, True)
-            if hit_aliens:
-                bullet.kill()
+    # Check collision with player
+    if pygame.sprite.spritecollide(player, alien_bullets, True):
+        player.lives -= 1
+        if player.lives == 0:
+            score = game_over()
 
-        screen.fill(BLACK)
-        player_group.draw(screen)
-        bullets.draw(screen)
-        alien_group.draw(screen)
+    # Draw everything
+    player_group.draw(screen)
+    bullets.draw(screen)
+    alien_group.draw(screen)
+    alien_bullets.draw(screen)
 
-        pygame.display.flip()
-        clock.tick(60)
+    # Display score and lives
+    draw_text(f"Score: {score}", 10, 10)
+    draw_text(f"Lives: {player.lives}", WIDTH - 100, 10)
 
-    pygame.quit()
+    pygame.display.flip()
+    pygame.time.delay(30)
 
-def run_game(screen):
-    selected_character = lobby.character_lobby(screen)
-    print(f"Selected Character: {selected_character['name']}")
-    start_game(screen, space_character)
-
-if __name__ == "__main__":
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    show_loading_screen(screen)
-    run_game(screen)
+pygame.quit()
