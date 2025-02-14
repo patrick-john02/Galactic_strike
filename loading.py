@@ -1,21 +1,51 @@
 import pygame
 import time
+import os
 
-# Colors
-WHITE = (255, 255, 255)
+# Define colors
 BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 
-WIDTH, HEIGHT = 800, 490
+def loading_screen(screen, width, height):
+    pygame.init()
 
-pygame.init()
-font = pygame.font.Font(None, 40)
+    frames = []
+    for i in range(1, 7):
+        frame_path = f"assets/images/frames/{i}.jpg"
+        if os.path.exists(frame_path):
+            frames.append(pygame.image.load(frame_path))
+        else:
+            print(f"Error: {frame_path} not found!")
 
-def loading_screen(screen):
-    screen.fill(BLACK)
-    screen.blit(pygame.image.load("assets/images/bb.gif"), (0, 0)) #background image ng loading screen
+    if not frames:
+        print("Error: No frames were loaded!")
+        return
 
+    frames = [pygame.transform.scale(frame, (width, height - 100)) for frame in frames]
+
+    font = pygame.font.Font(None, 50)
     text = font.render("Loading...", True, WHITE)
-    screen.blit(text, (WIDTH // 2 - 50, HEIGHT // 2))  
-    pygame.display.flip()
 
-    time.sleep(2)  # Simulate loading time
+    clock = pygame.time.Clock()
+    frame_index = 0
+    running = True
+    start_time = time.time()
+
+    while running:
+        screen.fill(BLACK)
+
+        # Display current frame
+        screen.blit(frames[frame_index], (0, 0))
+
+        # Display loading text
+        text_rect = text.get_rect(center=(width // 2, height - 50))
+        screen.blit(text, text_rect)
+
+        pygame.display.flip()
+        clock.tick(10) 
+
+        frame_index = (frame_index + 1) % len(frames)  
+
+        # Stop after 3 seconds
+        if time.time() - start_time > 3:
+            running = False

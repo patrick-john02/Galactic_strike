@@ -1,89 +1,98 @@
 import pygame
 
-# Screen dimensions
-WIDTH, HEIGHT = 850, 600
+# Define colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (200, 200, 200)
+GREEN = (0, 255, 0)  # Highlight color
 
-background = pygame.image.load("assets/images/11.png")  # Background for the lobby
-character_1 = pygame.image.load("assets/images/character.gif")  # First character
-character_2 = pygame.image.load("assets/images/alien.gif")  # Second character
-
-# size ng characters
-CHARACTER_SIZE = (200, 200)
-character_1 = pygame.transform.scale(character_1, CHARACTER_SIZE)
-character_2 = pygame.transform.scale(character_2, CHARACTER_SIZE)
-
-# Character attributes speed at power ng character
-characters = {
-    "character_1": {"name": "Space Hero", "speed": 5, "power": 7},
-    "character_2": {"name": "Alien Warrior", "speed": 7, "power": 5}
-}
-
-def draw_button(screen, text, x, y, width, height, color, hover_color, font):
-    """Draws a button and detects hover effect."""
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    button_rect = pygame.Rect(x, y, width, height)
-
-    if button_rect.collidepoint(mouse_x, mouse_y):
-        pygame.draw.rect(screen, hover_color, button_rect)
+def draw_circle_button(screen, text, x, y, radius, color, hover_color, font):
+    """Draws a circular button and checks for hover effect."""
+    mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
+    
+    distance = ((mouse[0] - x) ** 2 + (mouse[1] - y) ** 2) ** 0.5
+    if distance < radius:
+        pygame.draw.circle(screen, hover_color, (x, y), radius)
+        if click[0]:  
+            return True
     else:
-        pygame.draw.rect(screen, color, button_rect)
+        pygame.draw.circle(screen, color, (x, y), radius)
 
-    text_surf = font.render(text, True, (255, 255, 255))
-    screen.blit(text_surf, (x + (width - text_surf.get_width()) // 2, y + (height - text_surf.get_height()) // 2))
+    text_surface = font.render(text, True, BLACK)
+    text_rect = text_surface.get_rect(center=(x, y))
+    screen.blit(text_surface, text_rect)
+    return False
 
-    return button_rect
+def lobby_screen(screen, width, height):
+    """Displays the character selection lobby and returns selected character"""
+    pygame.init()
+    
+    # Load assets
+    bg = pygame.image.load("assets/images/11.png")  
+    hero1 = pygame.image.load("assets/images/spaceship.png")
+    hero2 = pygame.image.load("assets/images/rocket.png")
+    villain = pygame.image.load("assets/images/alien.gif")
+    
+    hero1 = pygame.transform.scale(hero1, (150, 200))
+    hero2 = pygame.transform.scale(hero2, (150, 200))
+    villain = pygame.transform.scale(villain, (200, 250))
 
-def character_lobby(screen):
-    """Displays the character selection lobby."""
-    font = pygame.font.Font(None, 40)  
-    stat_font = pygame.font.Font(None, 25) 
-    WHITE = (255, 255, 255)
-    BLUE = (0, 0, 255)
-    LIGHT_BLUE = (100, 100, 255)
+    # Character Positions
+    hero1_rect = hero1.get_rect(topleft=(50, height//2 - 100))
+    hero2_rect = hero2.get_rect(topleft=(250, height//2 - 100))
+    villain_rect = villain.get_rect(topleft=(width - 250, height//2 - 125))
 
+    font = pygame.font.Font(None, 40)
+    title_font = pygame.font.Font(None, 50)
+    selected_character = None  
     running = True
-    selected_character = None
-
     while running:
-        screen.blit(background, (0, 0))
+        screen.blit(bg, (0, 0))  
 
-        # Adjusted positions for characters
-        char1_x, char1_y = 200, HEIGHT // 3 - 100
-        char2_x, char2_y = WIDTH - 400, HEIGHT // 3 - 100
+        # Draw Title
+        title_surface = title_font.render("Click what character do you want", True, WHITE)
+        title_rect = title_surface.get_rect(center=(width // 2, 50))
+        screen.blit(title_surface, title_rect)
 
-        screen.blit(character_1, (char1_x, char1_y))
-        screen.blit(character_2, (char2_x, char2_y))
+        # Draw Characters with Highlight
+        if selected_character == "hero1":
+            pygame.draw.rect(screen, GREEN, hero1_rect.inflate(10, 10), 5)
+        if selected_character == "hero2":
+            pygame.draw.rect(screen, GREEN, hero2_rect.inflate(10, 10), 5)
 
-        # Adjusted positioning for character descriptions
-        char1_text = stat_font.render(f"{characters['character_1']['name']}", True, WHITE)
-        char1_stats = stat_font.render(f"Speed: {characters['character_1']['speed']}  Power: {characters['character_1']['power']}", True, WHITE)
+        screen.blit(hero1, hero1_rect.topleft)
+        screen.blit(hero2, hero2_rect.topleft)
+        screen.blit(villain, villain_rect.topleft)
 
-        char2_text = stat_font.render(f"{characters['character_2']['name']}", True, WHITE)
-        char2_stats = stat_font.render(f"Speed: {characters['character_2']['speed']}  Power: {characters['character_2']['power']}", True, WHITE)
+        # Draw Character Names
+        hero1_text = font.render("Spaceship", True, WHITE)
+        hero1_text_rect = hero1_text.get_rect(center=(hero1_rect.centerx, hero1_rect.bottom + 20))
+        screen.blit(hero1_text, hero1_text_rect)
 
-        screen.blit(char1_text, (char1_x + (CHARACTER_SIZE[0] // 2 - char1_text.get_width() // 2), char1_y + CHARACTER_SIZE[1] + 10))
-        screen.blit(char1_stats, (char1_x + (CHARACTER_SIZE[0] // 2 - char1_stats.get_width() // 2), char1_y + CHARACTER_SIZE[1] + 35))
+        hero2_text = font.render("Rocket", True, WHITE)
+        hero2_text_rect = hero2_text.get_rect(center=(hero2_rect.centerx, hero2_rect.bottom + 20))
+        screen.blit(hero2_text, hero2_text_rect)
 
-        screen.blit(char2_text, (char2_x + (CHARACTER_SIZE[0] // 2 - char2_text.get_width() // 2), char2_y + CHARACTER_SIZE[1] + 10))
-        screen.blit(char2_stats, (char2_x + (CHARACTER_SIZE[0] // 2 - char2_stats.get_width() // 2), char2_y + CHARACTER_SIZE[1] + 35))
-
-        # Buttons for selecting characters
-        char1_button = draw_button(screen, "Select", char1_x + 25, char1_y + CHARACTER_SIZE[1] + 60, 150, 50, BLUE, LIGHT_BLUE, font)
-        char2_button = draw_button(screen, "Select", char2_x + 25, char2_y + CHARACTER_SIZE[1] + 60, 150, 50, BLUE, LIGHT_BLUE, font)
-
-        pygame.display.flip()
-
-        # Event handling
+        # Handle Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                if char1_button.collidepoint(mouse_x, mouse_y):
-                    selected_character = characters["character_1"]
-                    running = False  # Exit lobby
-                elif char2_button.collidepoint(mouse_x, mouse_y):
-                    selected_character = characters["character_2"]
-                    running = False  # Exit lobby
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if hero1_rect.collidepoint(event.pos):
+                    selected_character = "hero1"
+                elif hero2_rect.collidepoint(event.pos):
+                    selected_character = "hero2"
 
-    return selected_character
+        # Draw Circular Buttons Horizontally
+        if draw_circle_button(screen, "Start", width // 2 - 150, height - 100, 50, GRAY, WHITE, font):
+            if selected_character:
+                return selected_character  # Return the chosen character
+        if draw_circle_button(screen, "Options", width // 2, height - 100, 50, GRAY, WHITE, font):
+            print("Options Menu!")  
+        if draw_circle_button(screen, "Exit", width // 2 + 150, height - 100, 50, GRAY, WHITE, font):
+            pygame.quit()
+            exit()
+
+        pygame.display.flip()
