@@ -30,9 +30,9 @@ def lobby_screen(screen, width, height):
     
     # Load assets
     bg = pygame.image.load("assets/images/11.png")  
-    hero1 = pygame.image.load("assets/images/spaceship.png")
-    hero2 = pygame.image.load("assets/images/rocket.png")
-    villain = pygame.image.load("assets/images/alien.gif")
+    hero1 = pygame.image.load("assets/blaster/char/sprites/ship.png")
+    hero2 = pygame.image.load("assets/blaster/char/sprites/enemy_kamikaze.png")
+    villain = pygame.image.load("assets/blaster/char/sprites/enemy_clever.png")
     
     hero1 = pygame.transform.scale(hero1, (150, 200))
     hero2 = pygame.transform.scale(hero2, (150, 200))

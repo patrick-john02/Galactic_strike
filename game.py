@@ -20,9 +20,9 @@ RED = (255, 0, 0)
 
 # Load assets
 background = pygame.image.load("assets/images/11.png")
-spaceship_img = pygame.image.load("assets/images/spaceship.png")
-rocket_img = pygame.image.load("assets/images/rocket.png")
-alien_img = pygame.image.load("assets/images/alien.gif")
+spaceship_img = pygame.image.load("assets/blaster/char/sprites/ship.png")
+rocket_img = pygame.image.load("assets/blaster/char/sprites/enemy_kamikaze.png")
+alien_img = pygame.image.load("assets/blaster/char/sprites/enemy_clever.png")
 asteroid_img = pygame.image.load("assets/images/asteroid.png")
 
 # Resize images
