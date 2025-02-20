@@ -33,19 +33,11 @@ def loading_screen(screen, width, height):
 
     while running:
         screen.fill(BLACK)
-
-        # Display current frame
         screen.blit(frames[frame_index], (0, 0))
-
-        # Display loading text
         text_rect = text.get_rect(center=(width // 2, height - 50))
         screen.blit(text, text_rect)
-
         pygame.display.flip()
         clock.tick(10) 
-
         frame_index = (frame_index + 1) % len(frames)  
-
-        # Stop after 3 seconds
         if time.time() - start_time > 3:
             running = False

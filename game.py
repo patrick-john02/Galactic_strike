@@ -3,10 +3,10 @@ from lobby import lobby_screen
 import pygame
 import random
 
-# Initialize pygame
+#pygame
 pygame.init()
 
-# Screen dimensions
+# Screen 
 WIDTH, HEIGHT = 850, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Galactic Strike")
@@ -14,9 +14,11 @@ pygame.display.set_caption("Galactic Strike")
 loading_screen(screen, WIDTH, HEIGHT) 
 selected_character_name = lobby_screen(screen, WIDTH, HEIGHT) 
 
-# Define colors
+#  colors
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
+
 
 # Load assets
 background = pygame.image.load("assets/images/11.png")
@@ -25,21 +27,21 @@ rocket_img = pygame.image.load("assets/blaster/char/sprites/enemy_kamikaze.png")
 alien_img = pygame.image.load("assets/blaster/char/sprites/enemy_clever.png")
 asteroid_img = pygame.image.load("assets/images/asteroid.png")
 
-# Resize images
+#images
 PLAYER_SIZE = (80, 80)
 spaceship_img = pygame.transform.scale(spaceship_img, PLAYER_SIZE)
 rocket_img = pygame.transform.scale(rocket_img, PLAYER_SIZE)
 alien_img = pygame.transform.scale(alien_img, (100, 100))
 asteroid_img = pygame.transform.scale(asteroid_img, (50, 50))
 
-# Character selection attributes
+# Character selection
 characters = {
     "hero1": {"name": "Space Fighter", "image": spaceship_img, "speed": 7, "attack_power": 2, "fire_rate": 300},
     "hero2": {"name": "Rocket Warrior", "image": rocket_img, "speed": 6, "attack_power": 3, "fire_rate": 400}
 }
 selected_character = characters.get(selected_character_name, characters["hero1"])
 
-# Initialize font
+#fonts
 font = pygame.font.Font(None, 36)
 
 class Player(pygame.sprite.Sprite):
@@ -101,6 +103,7 @@ class Alien(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midtop=(WIDTH // 2, 10))
         self.speed = 3
         self.direction = 1
+        self.health = 10  
         self.last_throw_time = 0
         self.throw_interval = 1500
 
@@ -116,7 +119,12 @@ class Alien(pygame.sprite.Sprite):
             asteroids.add(asteroid)
             self.last_throw_time = current_time
 
-# Initialize Player and Alien
+    def take_damage(self, damage):
+        self.health -= damage
+        if self.health <= 0:
+            self.kill()
+
+#Player and Alien
 player = Player(selected_character)
 player_group = pygame.sprite.Group(player)
 bullets = pygame.sprite.Group()
@@ -126,55 +134,89 @@ alien_group = pygame.sprite.Group(alien)
 
 # Game loop
 running = True
+game_over = False  
 clock = pygame.time.Clock()
 
 while running:
     screen.blit(background, (0, 0))
 
-    bullets.update()
-    asteroids.update()
-    alien.move()
-    alien.throw_asteroid()
+    if not game_over:
+        bullets.update()
+        asteroids.update()
+        alien.move()
+        alien.throw_asteroid()
 
-    bullets.draw(screen)
-    asteroids.draw(screen)
-    alien_group.draw(screen)
-    player_group.draw(screen)
+        bullets.draw(screen)
+        asteroids.draw(screen)
+        alien_group.draw(screen)
+        player_group.draw(screen)
 
-    # Check bullet collisions with asteroids
-    for bullet in bullets:
-        asteroid_hit = pygame.sprite.spritecollide(bullet, asteroids, True)
-        if asteroid_hit:
-            player.score += 10
+        # bullet collisions with asteroids
+        for bullet in bullets:
+            asteroid_hit = pygame.sprite.spritecollide(bullet, asteroids, True)
+            if asteroid_hit:
+                player.score += 10
+                bullet.kill()
+
+        # bullet collisions with alien
+        alien_hit = pygame.sprite.spritecollide(alien, bullets, True)
+        for bullet in alien_hit:
+            alien.take_damage(player.attack_power)
+            player.score += 20  
             bullet.kill()
 
-    # Check if player is hit by an asteroid
-    if pygame.sprite.spritecollide(player, asteroids, True):
-        player.lives -= 1
-    if player.lives <= 0:
-        loading_screen(screen, WIDTH, HEIGHT) 
-        selected_character_name = lobby_screen(screen, WIDTH, HEIGHT)  
-        selected_character = characters.get(selected_character_name, characters["hero1"]) 
-        player = Player(selected_character)  
-        asteroids.empty()  
-        bullets.empty()  
-        running = True 
+        # player is hit by an asteroid
+        if pygame.sprite.spritecollide(player, asteroids, True):
+            player.lives -= 1
 
-    # Display score and lives
+        # Game over conditions
+        if player.lives <= 0:
+            game_over = True
+            winner = False  
+
+        if alien.health <= 0:
+            game_over = True
+            winner = True  
+
+    else:
+        if winner:
+            game_over_text = font.render("You win!! Press R to play again", True, YELLOW)
+        else:
+            game_over_text = font.render("You loose Press R to play again", True, RED)
+        
+        screen.blit(game_over_text, (WIDTH // 2 - 150, HEIGHT // 2))
+
     score_text = font.render(f"Score: {player.score}", True, WHITE)
     lives_text = font.render(f"Lives: {player.lives}", True, WHITE)
+    alien_health_text = font.render(f"Alien HP: {alien.health}", True, RED)
+
     screen.blit(score_text, (10, 10))  
     screen.blit(lives_text, (WIDTH - 100, 10))  
+    screen.blit(alien_health_text, (WIDTH // 2 - 50, 10))
 
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN:
+        if not game_over and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 player.shoot()
+        elif game_over and event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                selected_character_name = lobby_screen(screen, WIDTH, HEIGHT)
+                selected_character = characters.get(selected_character_name, characters["hero1"])
+                player = Player(selected_character)
+                player_group = pygame.sprite.Group(player)
+                bullets.empty()
+                asteroids.empty()
+                alien = Alien()
+                alien_group = pygame.sprite.Group(alien)
+                game_over = False
+                winner = False  
 
-    player.move(keys)
+    if not game_over:
+        player.move(keys)
+
     pygame.display.flip()
     clock.tick(60)
 

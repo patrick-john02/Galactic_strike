@@ -1,13 +1,12 @@
 import pygame
 
-# Define colors
+#colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
-GREEN = (0, 255, 0)  # Highlight color
+GREEN = (0, 255, 0) 
 
 def draw_circle_button(screen, text, x, y, radius, color, hover_color, font):
-    """Draws a circular button and checks for hover effect."""
     mouse = pygame.mouse.get_pos()
     click = pygame.mouse.get_pressed()
     
@@ -25,7 +24,6 @@ def draw_circle_button(screen, text, x, y, radius, color, hover_color, font):
     return False
 
 def lobby_screen(screen, width, height):
-    """Displays the character selection lobby and returns selected character"""
     pygame.init()
     
     # Load assets
@@ -50,12 +48,11 @@ def lobby_screen(screen, width, height):
     while running:
         screen.blit(bg, (0, 0))  
 
-        # Draw Title
+        #Title
         title_surface = title_font.render("Click what character do you want", True, WHITE)
         title_rect = title_surface.get_rect(center=(width // 2, 50))
         screen.blit(title_surface, title_rect)
 
-        # Draw Characters with Highlight
         if selected_character == "hero1":
             pygame.draw.rect(screen, GREEN, hero1_rect.inflate(10, 10), 5)
         if selected_character == "hero2":
@@ -65,7 +62,7 @@ def lobby_screen(screen, width, height):
         screen.blit(hero2, hero2_rect.topleft)
         screen.blit(villain, villain_rect.topleft)
 
-        # Draw Character Names
+        #Character Names
         hero1_text = font.render("Spaceship", True, WHITE)
         hero1_text_rect = hero1_text.get_rect(center=(hero1_rect.centerx, hero1_rect.bottom + 20))
         screen.blit(hero1_text, hero1_text_rect)
@@ -74,7 +71,6 @@ def lobby_screen(screen, width, height):
         hero2_text_rect = hero2_text.get_rect(center=(hero2_rect.centerx, hero2_rect.bottom + 20))
         screen.blit(hero2_text, hero2_text_rect)
 
-        # Handle Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -85,10 +81,9 @@ def lobby_screen(screen, width, height):
                 elif hero2_rect.collidepoint(event.pos):
                     selected_character = "hero2"
 
-        # Draw Circular Buttons Horizontally
         if draw_circle_button(screen, "Start", width // 2 - 150, height - 100, 50, GRAY, WHITE, font):
             if selected_character:
-                return selected_character  # Return the chosen character
+                return selected_character  
         if draw_circle_button(screen, "Options", width // 2, height - 100, 50, GRAY, WHITE, font):
             print("Options Menu!")  
         if draw_circle_button(screen, "Exit", width // 2 + 150, height - 100, 50, GRAY, WHITE, font):
