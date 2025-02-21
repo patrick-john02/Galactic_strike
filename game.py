@@ -124,6 +124,20 @@ class Alien(pygame.sprite.Sprite):
         if self.health <= 0:
             self.kill()
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("assets/blaster/char/sprites/explosion.png")
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.lifetime = 20 
+
+    def update(self):
+        self.lifetime -= 1
+        if self.lifetime <= 0:
+            self.kill()
+
+
 #Player and Alien
 player = Player(selected_character)
 player_group = pygame.sprite.Group(player)
@@ -131,7 +145,7 @@ bullets = pygame.sprite.Group()
 asteroids = pygame.sprite.Group()
 alien = Alien()
 alien_group = pygame.sprite.Group(alien)
-
+explosions = pygame.sprite.Group()
 # Game loop
 running = True
 game_over = False  
@@ -150,26 +164,31 @@ while running:
         asteroids.draw(screen)
         alien_group.draw(screen)
         player_group.draw(screen)
+        explosions.update()
+        explosions.draw(screen)
 
-        # bullet collisions with asteroids
+        
+        
+
         for bullet in bullets:
             asteroid_hit = pygame.sprite.spritecollide(bullet, asteroids, True)
-            if asteroid_hit:
+            for asteroid in asteroid_hit:
                 player.score += 10
+                explosions.add(Explosion(asteroid.rect.centerx, asteroid.rect.centery))
                 bullet.kill()
 
-        # bullet collisions with alien
+
         alien_hit = pygame.sprite.spritecollide(alien, bullets, True)
         for bullet in alien_hit:
             alien.take_damage(player.attack_power)
             player.score += 20  
             bullet.kill()
 
-        # player is hit by an asteroid
+
         if pygame.sprite.spritecollide(player, asteroids, True):
             player.lives -= 1
 
-        # Game over conditions
+
         if player.lives <= 0:
             game_over = True
             winner = False  
